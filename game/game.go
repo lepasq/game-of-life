@@ -12,15 +12,16 @@ import (
 )
 
 const (
-	winWidth   = 640
-	winHeight  = 480
-	colAmount  = 80
-	rowAmount  = 60
-	cellWidth  = winWidth / colAmount
-	cellHeight = winHeight / rowAmount
-	alive      = 1
-	dead       = 0
-	frequency  = 12
+	winWidth     = 640
+	winHeight    = 480
+	colAmount    = 160
+	rowAmount    = 120
+	cellWidth    = winWidth / colAmount
+	cellHeight   = winHeight / rowAmount
+	alive        = 1
+	dead         = 0
+	frequency    = 16
+	distribution = 7
 )
 
 type Game struct {
@@ -33,19 +34,11 @@ type World struct {
 	next  [colAmount][rowAmount]int
 }
 
-// type Cell struct {
-// 	i   int
-// 	j   int
-// 	val int
-// }
-
-// var Updates chan Cell = make(chan Cell)
-
 func (w *World) generateWorld() {
 	rand.Seed(time.Now().UnixNano())
 	for i, rows := range w.Cells {
 		for j := range rows {
-			n := rand.Intn(7)
+			n := rand.Intn(distribution)
 			if n == 1 {
 				w.Cells[i][j] = alive
 			}
@@ -65,9 +58,6 @@ func (w *World) runAllCells() {
 	for i, rows := range w.Cells {
 		for j := range rows {
 			w.updateCell(i, j)
-			// newValue := w.next[i][j]
-			// if v != newValue {
-			// Updates <- Cell{i, j, newValue}
 		}
 	}
 	w.Cells = w.next
@@ -112,10 +102,6 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	now := time.Now()
 	defer time.Sleep(time.Second/frequency - time.Since(now))
-
-	// for cell := range Updates {
-	// 	g.UpdateCell(screen, cell.i, cell.j, cell.val)
-	// }
 
 	for i, row := range g.world.Cells {
 		for j, value := range row {
