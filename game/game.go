@@ -37,13 +37,14 @@ type Cell struct {
 	val int
 }
 
+// var Updates chan Cell = make(chan Cell)
+
 func (w *World) generateWorld() {
 	w.Cells[2][1], w.Cells[2][2], w.Cells[2][2], w.Cells[2][3], w.Cells[4][4], w.Cells[4][5],
 		w.Cells[5][4], w.Cells[5][5], w.Cells[6][6], w.Cells[6][7], w.Cells[7][6], w.Cells[7][7] =
 		alive, alive, alive, alive, alive, alive, alive, alive, alive, alive, alive, alive
 
 	w.next = w.Cells
-	w.printCells()
 }
 
 func (w *World) printCells() {
@@ -57,9 +58,9 @@ func (w *World) runAllCells() {
 	for i, v := range w.Cells {
 		for j := range v {
 			w.updateCell(i, j)
-			newValue := w.next[i][j]
+			// newValue := w.next[i][j]
 			// if v != newValue {
-			Updates <- Cell{i, j, newValue}
+			// Updates <- Cell{i, j, newValue}
 		}
 	}
 	w.Cells = w.next
@@ -90,34 +91,40 @@ func (w *World) updateCellValue(counter, row, col int) {
 	}
 }
 
-var Updates chan Cell = make(chan Cell)
-
 func (g *Game) Update() error {
-	for {
-		g.world.runAllCells()
-		g.world.printCells()
-		time.Sleep(time.Second)
-	}
+	now := time.Now()
+	g.world.runAllCells()
+	time.Sleep(time.Second/2 - time.Since(now))
+	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for cell := range Updates {
-		g.UpdateCell(screen, cell.i, cell.j, cell.val)
+	now := time.Now()
+	defer time.Sleep(time.Second/2 - time.Since(now))
+
+	// for cell := range Updates {
+	// 	g.UpdateCell(screen, cell.i, cell.j, cell.val)
+	// }
+
+	for i, row := range g.world.Cells {
+		for j, value := range row {
+			g.drawCell(screen, i, j, value)
+		}
 	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
+	return winWidth, winHeight
 }
 
-func (g *Game) UpdateCell(screen *ebiten.Image, i, j, value int) {
-	var cellColor color.Color
-	if value == 1 {
-		cellColor = color.RGBA{0xFF, 0, 0, 0xFF}
-	} else {
-		cellColor = color.RGBA{0, 0xFF, 0, 0xFF}
+func (g *Game) drawCell(screen *ebiten.Image, i, j, value int) {
+	if value == alive {
+		cellColor := color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}
+		ebitenutil.DrawLine(screen, float64(cellWidth*i), float64(cellHeight*j), float64(cellWidth*(i+1)), float64(cellHeight*j), cellColor)
+		ebitenutil.DrawLine(screen, float64(cellWidth*i), float64(cellHeight*j), float64(cellWidth*i), float64(cellHeight*(j+1)), cellColor)
+		ebitenutil.DrawLine(screen, float64(cellWidth*i), float64(cellHeight*(j+1)), float64(cellWidth*(i+1)), float64(cellHeight*(j+1)), cellColor)
+		ebitenutil.DrawLine(screen, float64(cellWidth*(i+1)), float64(cellHeight*j), float64(cellWidth*(i+1)), float64(cellHeight*(j+1)), cellColor)
 	}
-	ebitenutil.DrawRect(screen, cellWidth*1, cellHeight*1, cellWidth, cellHeight, cellColor)
 }
 
 func Start() {
